@@ -1,0 +1,22 @@
+#!/bin/zsh -i
+
+if [[ $# -eq 0 ]]; then
+    print "Usage: $0 PEER [PEER ...]" >&2
+    exit 1
+fi
+
+ib_hostname() {
+    # Turns names like "foo.bar.com" into "foo-ib.bar.com".
+    # (which is the convention used for IB on UMD clusters)
+    print ${1/\./-ib.}
+}
+
+# Quote each host passed as an argument to the script.
+peers=()
+for peer in $@; do
+    peers+="'rdma_bench@$(ib_hostname $peer)'"
+done
+
+cd $(dirname $(readlink -f $0))
+elixir --erl "+K true -pa deps/rdma_dist/ebin -proto_dist rdma -name rdma_bench@$(ib_hostname $(hostname)) -kernel sync_nodes_mandatory [${(j:,:)peers}] -kernel sync_nodes_timeout 10000" -S mix run --no-halt --no-compile
+#elixir --erl "+K true -pa deps/rdma_dist/ebin -name rdma_bench@$(ib_hostname $(hostname)) -kernel sync_nodes_mandatory [${(j:,:)peers}] -kernel sync_nodes_timeout 10000" -S mix run --no-halt --no-compile

@@ -1,0 +1,11 @@
+#!/bin/zsh
+#PBS -l walltime=60 -l nodes=4:ppn=8
+
+# Collect a list of nodes.
+nodes=()
+for node in $(sort -u $PBS_NODEFILE); do
+    nodes+=$node
+done
+
+# Run the program.
+/usr/local/scripts/parallel_fork -a -h <(print -l $nodes) $HOME/rdma_bench/rdma_bench $nodes
